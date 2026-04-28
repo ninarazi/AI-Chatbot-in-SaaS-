@@ -4,9 +4,10 @@ import {
   LayoutGrid, Star, User, Sparkles, RefreshCw, Minus, Maximize2,
   Filter, Columns, Calendar, Share2, ArrowUpDown, Search as SearchIcon,
   Folder, Building2, User2, AlertCircle, CheckCircle2, Circle, MoreHorizontal,
-  Layout, Home, ChevronRight, Info, ChevronUp, Coffee, LocateFixed
+  Layout, Home, ChevronRight, Info, ChevronUp, Coffee, LocateFixed,
+  Paperclip, Send, ChevronLeft, ChevronsLeft, Pencil, Copy, ThumbsUp, ThumbsDown
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { KPIS, MILESTONES, PROJECTS } from './data/mock';
 import { ProjectRow, Milestone, KPI, ProjectStatus, RAGStatus, Priority } from './types';
 
@@ -42,11 +43,91 @@ const getPriorityColor = (priority: Priority) => {
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<ProjectRow | null>(null);
+  const [aiInput, setAiInput] = useState('');
+  const [aiResponse, setAiResponse] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
+
+  const loadingMessages = [
+    "Analyzing project data...",
+    "Evaluating priority signals...",
+    "Checking risk and dependencies..."
+  ];
+
+  React.useEffect(() => {
+    let interval: any;
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % loadingMessages.length);
+      }, 1500);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  const handleSubmitQuestion = () => {
+    const query = aiInput.trim();
+    if (!query || isProcessing) return;
+    
+    setSubmittedQuestion(query);
+    setIsProcessing(true);
+    setAiResponse(null);
+    setAiInput(''); // Clear input on submit as per standard chat behavior
+    
+    // Simulate AI response for the specific question with a realistic delay
+    setTimeout(() => {
+      // Guard if stopped manually or component unmounted
+      setIsProcessing((currentProcessing) => {
+        if (!currentProcessing) return false;
+
+        const project = selectedProject || PROJECTS.find(p => p.name === 'Aurora');
+        const questionLower = query.toLowerCase();
+
+        if (questionLower.includes('priority') || questionLower.includes('risk')) {
+          setAiResponse({
+            title: "Citizen AI",
+            summary: `The "${project?.name || 'Aurora'}" project is associated with several risks. Here are some of them:`,
+            risks: [
+              "1. Battery Supplier Bankruptcy: Risk of a key battery supplier declaring bankruptcy, affecting production costs and timelines. Status: To be Reviewed.",
+              "2. Firmware Update Delays: Delays in firmware development could postpone the product launch. Status: Drafted.",
+              "3. Talent Loss to Competitors: Skilled workers may leave for competitors, causing project delays. Status: To be Assessed.",
+              "4. Currency Exchange Rate Fluctuations: Fluctuating currency rates could increase project costs. Status: Drafted.",
+              "5. Data Breach in User Privacy: Unauthorized data access could compromise user privacy and harm brand reputation. Status: Drafted.",
+              "6. New Emission Standards: New government regulations on emissions could require significant design changes. Status: Mitigated.",
+              "7. Flooding blocks Production Line: A flooding blocks the production for at least 12 months. Status: To be Reviewed.",
+              "8. Supply Chain Disruptions: The risk of interruptions or delays in the supply chain that can affect production schedules and lead to increased costs. Status: To be Assessed."
+            ],
+            suggestion: "Would you like me to prepare a detailed inform?"
+          });
+        } else {
+          setAiResponse({
+            title: "Citizen AI",
+            summary: "I've analyzed the current project dashboard data for you.",
+            insights: [
+              "Project 'Aurora' is on track but requires risk review.",
+              "Total RAG status for muni-location projects is Yellow.",
+              "Next milestone (CyberDrive) is 12 Nov 2025."
+            ],
+            suggestion: "Should I double check the resource allocation?"
+          });
+        }
+        return false;
+      });
+    }, 2500);
+  };
+
+  const handleStop = () => {
+    setIsProcessing(false);
+  };
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] font-sans text-slate-800 overflow-hidden select-none">
+    <div className="flex h-screen bg-[#F1F5F9] font-sans text-slate-800 overflow-hidden select-none relative">
       {/* Sidebar - Precise match to image */}
-      <aside className="w-12 bg-[#002B5B] flex flex-col items-center py-3 gap-4 shrink-0 z-50">
+      <aside className="w-12 bg-[#006199] flex flex-col items-center py-3 gap-4 shrink-0 z-50">
         <div className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded cursor-pointer transition-colors">
           <Menu className="w-5 h-5" />
         </div>
@@ -124,19 +205,18 @@ export default function App() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs text-slate-500 hover:text-cplace-blue cursor-pointer">Page Settings</span>
-              <button className="flex items-center p-[1px] rounded-[4px] bg-gradient-to-br from-[#00E676] via-[#A033FF] to-[#0078BD] cursor-pointer group shadow-sm w-[68.95px] h-[28px] overflow-hidden shrink-0">
+              <button 
+                onClick={() => setIsAiSidebarOpen(true)}
+                className="flex items-center p-[1px] rounded-[4px] bg-gradient-to-br from-[#00E676] via-[#A033FF] to-[#0078BD] cursor-pointer group shadow-sm w-[68.95px] h-[28px] overflow-hidden shrink-0"
+              >
                 <div className="flex items-center gap-[4px] pt-[6px] pb-[6px] pl-[4px] pr-[4px] bg-white rounded-[3px] w-full h-full transition-colors group-hover:bg-slate-50 justify-center">
                   <div className="shrink-0 w-4 h-4 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[15.95px] h-4">
-                      <defs>
-                        <radialGradient id="star-grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                          <stop offset="0%" stopColor="#0045AC" />
-                          <stop offset="60%" stopColor="#00E676" />
-                          <stop offset="100%" stopColor="#A033FF" />
-                        </radialGradient>
-                      </defs>
-                      <path d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z" fill="url(#star-grad)" />
-                    </svg>
+                    <img 
+                      src="/ai_icon.svg" 
+                      alt="AI Icon" 
+                      className="w-[15.95px] h-4" 
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                   <span className="text-[#0045AC] font-sans font-normal text-[16px] leading-[20px] whitespace-nowrap">Ask AI</span>
                 </div>
@@ -310,7 +390,11 @@ export default function App() {
                             </td>
                           </tr>
                           {rows.map(row => (
-                            <tr key={row.id} className="h-10 border-b border-slate-100 hover:bg-slate-50 group">
+                            <tr 
+                              key={row.id} 
+                              onClick={() => setSelectedProject(row)}
+                              className={`h-10 border-b border-slate-100 cursor-pointer transition-colors ${selectedProject?.id === row.id ? 'bg-cplace-blue/10' : 'hover:bg-slate-50'} group`}
+                            >
                               <td className="w-10 border-r border-slate-100 text-center">
                                 <input type="checkbox" className="w-3.5 h-3.5 rounded border-slate-300" />
                               </td>
@@ -377,6 +461,325 @@ export default function App() {
       <div className="fixed right-6 bottom-32 w-12 h-12 bg-cplace-blue rounded-full shadow-2xl flex items-center justify-center text-white cursor-pointer hover:scale-110 transition-transform">
         <HelpCircle className="w-6 h-6" />
       </div>
+
+      {/* AI Companion Sidebar */}
+      <AnimatePresence>
+        {isAiSidebarOpen && (
+          <motion.aside
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-[450px] bg-[#00207A] z-[100] shadow-2xl flex flex-col text-white"
+          >
+            {/* Top-right Branded Icon - Scale down after interaction */}
+            <motion.img 
+              layout
+              src="/ai_icon.svg" 
+              alt="AI Icon" 
+              className={`absolute right-8 transition-all duration-500 pointer-events-none ${
+                submittedQuestion ? 'top-4 w-12 h-12 opacity-40' : 'top-8 w-24 h-24 opacity-90'
+              }`} 
+              referrerPolicy="no-referrer"
+            />
+
+            {/* Sidebar Toggle/Close */}
+            <div className="p-4 relative z-10">
+              <button 
+                onClick={() => setIsAiSidebarOpen(false)}
+                className="text-white/60 hover:text-white transition-colors p-2"
+              >
+                <span className="text-2xl">»</span>
+              </button>
+            </div>
+
+            {/* AI Content and Input Area */}
+            <div className={`flex-1 px-8 flex flex-col relative z-10 w-full overflow-hidden transition-all duration-500 ${
+              submittedQuestion ? 'pt-2' : 'pt-20'
+            }`}>
+              <AnimatePresence mode="wait">
+                {!submittedQuestion ? (
+                  <motion.div 
+                    key="initial"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mb-12"
+                  >
+                    <h2 className="text-[32px] font-bold leading-tight text-white mb-2">
+                      Hello <span className="text-[#00E676]">Julia,</span>
+                    </h2>
+                    <p className="text-[32px] font-bold leading-tight text-white">How can I assist you today?</p>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="conversation"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex-1 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar pb-4"
+                  >
+                    {/* User Question Card */}
+                    <div className="self-end w-full flex justify-end">
+                      <div className="bg-white rounded-lg p-3 shadow-md border border-slate-100 flex gap-4 max-w-[90%] relative">
+                        <div className="flex-1">
+                          <div className="text-[13px] font-bold text-slate-900 mb-1">Julia Hillenkötter</div>
+                          <div className="text-[13px] text-slate-600 leading-snug">
+                            {submittedQuestion}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 shrink-0">
+                          <div className="w-10 h-10 rounded-full border border-slate-200 overflow-hidden bg-slate-50">
+                            <img 
+                              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Julia" 
+                              alt="Avatar" 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                          <div className="flex items-center gap-2.5 text-slate-400 pt-1">
+                            <Pencil className="w-3.5 h-3.5 cursor-pointer hover:text-cplace-blue transition-colors" />
+                            <Copy className="w-3.5 h-3.5 cursor-pointer hover:text-cplace-blue transition-colors" />
+                          </div>
+                        </div>
+                        {/* Little tail/arrow could be added with absolute CSS if needed, but let's stick to clean card first */}
+                      </div>
+                    </div>
+
+                    {/* AI Thinking/Response Area */}
+                    <AnimatePresence mode="wait">
+                      {isProcessing ? (
+                        <motion.div 
+                          key="thinking-card"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          className="bg-white rounded-xl shadow-2xl overflow-hidden text-slate-800 flex flex-col border border-white/20"
+                        >
+                          {/* Card Header: Citizen AI - Loading */}
+                          <div className="bg-[#f8fafc] px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cplace-blue to-teal-400 p-[1px] shadow-sm">
+                                <div className="bg-white w-full h-full rounded-[7.5px] flex items-center justify-center">
+                                  <img src="/ai_icon.svg" className="w-6 h-6" alt="AI" />
+                                </div>
+                              </div>
+                              <div className="flex flex-col -space-y-0.5">
+                                <span className="font-bold text-[14px] text-slate-800">Citizen AI</span>
+                                <motion.span 
+                                  key={loadingStep}
+                                  initial={{ opacity: 0, x: -5 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  className="text-[11px] text-cplace-blue font-semibold tracking-tight"
+                                >
+                                  {loadingMessages[loadingStep]}
+                                </motion.span>
+                              </div>
+                            </div>
+                            <div className="w-6 h-6 relative flex items-center justify-center">
+                              <svg className="absolute inset-0 w-full h-full animate-spin text-cplace-blue" viewBox="0 0 24 24">
+                                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+                                <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          {/* Thinking Dots */}
+                          <div className="p-8 flex flex-col items-center justify-center gap-4 min-h-[160px]">
+                            <div className="flex gap-1">
+                              {[0, 1, 2].map(i => (
+                                <motion.div 
+                                  key={i}
+                                  animate={{ 
+                                    scale: [1, 1.2, 1],
+                                    opacity: [0.3, 1, 0.3]
+                                  }}
+                                  transition={{ 
+                                    duration: 1,
+                                    repeat: Infinity,
+                                    delay: i * 0.2
+                                  }}
+                                  className="w-2 h-2 bg-cplace-blue rounded-full"
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-slate-400 font-medium tracking-wide">Processing response...</span>
+                          </div>
+                        </motion.div>
+                      ) : aiResponse && (
+                        <motion.div 
+                          key="response-card"
+                          initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          className="bg-white rounded-xl shadow-2xl overflow-hidden text-slate-800 flex flex-col border border-white/20 max-h-[60vh]"
+                        >
+                          {/* Card Header: Citizen AI - Final */}
+                          <div className="bg-[#f8fafc] px-4 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cplace-blue to-teal-400 p-[1px] shadow-sm">
+                                <div className="bg-white w-full h-full rounded-[7.5px] flex items-center justify-center">
+                                  <img src="/ai_icon.svg" className="w-6 h-6" alt="AI" />
+                                </div>
+                              </div>
+                              <div className="flex flex-col -space-y-0.5">
+                                <span className="font-bold text-[14px] text-slate-800">Citizen AI</span>
+                              </div>
+                            </div>
+                            <Sparkles className="w-4 h-4 text-[#00E676]" />
+                          </div>
+
+                          {/* Response Content - Scrollable if too long */}
+                          <div className="p-4 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                            <p className="text-[14px] leading-relaxed text-slate-800">
+                              {aiResponse.summary}
+                            </p>
+                            
+                            {aiResponse.risks ? (
+                              <div className="space-y-2">
+                                {aiResponse.risks.map((riskStr: string, i: number) => {
+                                  const match = riskStr.match(/^(\d+\.)\s+(.*?):\s+(.*)$/);
+                                  if (match) {
+                                    const [, num, title, rest] = match;
+                                    return (
+                                      <div key={i} className="flex items-start gap-2 text-[14px] leading-tight text-slate-800">
+                                        <span className="text-[#0045AC] font-medium min-w-[20px]">{num}</span>
+                                        <span>
+                                          <span className="text-[#0045AC] font-medium">{title}:</span>
+                                          <span className="ml-1 text-slate-700">{rest}</span>
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                  return <div key={i} className="text-[14px] text-slate-700">{riskStr}</div>;
+                                })}
+                              </div>
+                            ) : aiResponse.insights && (
+                              <div className="space-y-2">
+                                {aiResponse.insights.map((insight: string, i: number) => (
+                                  <div key={i} className="flex items-start gap-2 text-[14px] text-slate-500">
+                                    <div className="w-1.5 h-1.5 bg-[#00E676] rounded-full mt-1.5 shrink-0" />
+                                    <span>{insight}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {aiResponse.suggestion && (
+                              <div className="pt-2">
+                                <button 
+                                  onClick={() => {/* Trigger next flow */}}
+                                  className="text-[#A033FF] font-medium text-[15px] hover:underline cursor-pointer transition-all active:scale-[0.98]"
+                                >
+                                  {aiResponse.suggestion}
+                                </button>
+                              </div>
+                            )}
+
+                            {aiResponse.actions && (
+                              <div className="flex flex-wrap gap-2 pt-2">
+                                {aiResponse.actions.map((action: string, i: number) => (
+                                  <button 
+                                    key={i}
+                                    className="px-3 py-1.5 bg-[#00207A] text-white text-[12px] font-medium rounded-full hover:bg-[#0030A0] transition-colors"
+                                  >
+                                    {action}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Interaction Icons - Outside card as per screenshot */}
+                    {!isProcessing && aiResponse && (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        className="flex items-center gap-3 px-1"
+                      >
+                        <Copy className="w-4 h-4 text-white/40 cursor-pointer hover:text-white transition-colors" />
+                        <RefreshCw className="w-4 h-4 text-white/40 cursor-pointer hover:text-white transition-colors" />
+                        <ThumbsUp className="w-4 h-4 text-white/40 cursor-pointer hover:text-white transition-colors" />
+                        <ThumbsDown className="w-4 h-4 text-white/40 cursor-pointer hover:text-white transition-colors" />
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Chat Input Area */}
+              <div className="mt-auto mb-10 w-full relative">
+                {/* Reasoning small text removed from here as it's now in the loading card header */}
+
+                <div className="p-[1px] rounded-lg bg-gradient-to-r from-[#00E676] via-[#A033FF] to-[#0078BD]">
+                  <div className={`relative bg-[#F8FAFC] rounded-[7px] overflow-hidden group focus-within:ring-2 ring-white/20 transition-opacity ${isProcessing ? 'opacity-80' : ''}`}>
+                    <textarea 
+                      value={aiInput}
+                      onChange={(e) => setAiInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmitQuestion();
+                        }
+                      }}
+                      readOnly={isProcessing}
+                      placeholder={isProcessing ? "Analyzing..." : "Type something..."}
+                      className="w-full bg-transparent text-slate-800 rounded-lg p-3 pt-4 pr-12 h-24 resize-none focus:outline-none text-[15px] placeholder:text-slate-400"
+                    />
+                    <div className="absolute right-3 top-3">
+                      {isProcessing ? (
+                        <div className="relative w-7 h-7 flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full animate-spin text-[#0078BD]" viewBox="0 0 24 24">
+                            <circle 
+                              className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none"
+                            />
+                            <path 
+                              className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          <button 
+                            onClick={handleStop}
+                            className="bg-slate-800 w-2.5 h-2.5 rounded-sm hover:scale-110 transition-transform active:scale-95 z-10"
+                            title="Stop generation"
+                          />
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={handleSubmitQuestion}
+                          className="w-5 h-5 flex items-center justify-center transition-transform active:scale-90"
+                        >
+                          <img 
+                            src="/ai_icon.svg" 
+                            alt="AI Icon" 
+                            className="w-4 h-4" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </button>
+                      )}
+                    </div>
+                    <div className="absolute right-3 bottom-3 flex items-center gap-3">
+                      <Paperclip className="w-5 h-5 text-slate-400 cursor-pointer hover:text-slate-600" />
+                      {!isProcessing && (
+                        <button 
+                          onClick={handleSubmitQuestion}
+                          className="text-[#00207A] hover:text-[#0030A0]"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <p className="text-[11px] text-white/50 text-center mb-6">
+                All models can make mistakes. Always verify important information.
+              </p>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

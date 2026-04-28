@@ -1,0 +1,10 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#ai_gradient)"/>
+  <defs>
+    <radialGradient id="ai_gradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12 12) rotate(90) scale(12)">
+      <stop stop-color="#0045AC"/>
+      <stop offset="0.6" stop-color="#00E676"/>
+      <stop offset="1" stop-color="#A033FF"/>
+    </radialGradient>
+  </defs>
+</svg>

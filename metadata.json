@@ -1,5 +1,6 @@
 {
-  "name": "Project Dashboard",
+  "name": "AI-Chatbot-in-SaaS-Dark",
   "description": "A comprehensive Project Dashboard featuring KPI cards, milestone timelines, and a grouped project list with RAG status and management priorities.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": []
 }
